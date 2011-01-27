@@ -40,7 +40,8 @@ int main(int argc, char* argv[]) {
     bool bamInput       = false;
     bool haveBedA       = false;
     bool haveBedB       = false;
-
+    bool singleLine = false;
+    
     // check to see if we should print out some help
     if(argc <= 1) showHelp = true;
 
@@ -94,6 +95,9 @@ int main(int argc, char* argv[]) {
         else if (PARAMETER_CHECK("-split", 6, parameterLength)) {
             obeySplits = true;
         }
+        else if (PARAMETER_CHECK("-singleLine", 11, parameterLength)) {
+	         singleLine = true;
+	    }
         else {
             cerr << endl << "*****ERROR: Unrecognized parameter: " << argv[i] << " *****" << endl << endl;
             showHelp = true;
@@ -107,7 +111,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (!showHelp) {
-        BedCoverage *bg = new BedCoverage(bedAFile, bedBFile, forceStrand, writeHistogram, bamInput, obeySplits, eachBase);
+        BedCoverage *bg = new BedCoverage(bedAFile, bedBFile, forceStrand, writeHistogram, bamInput, obeySplits, eachBase, singleLine);
         delete bg;
         return 0;
     }
@@ -144,6 +148,9 @@ void ShowHelp(void) {
     cerr                        << "\t\tPositions reported are one based.  Each position" << endl;
     cerr                        << "\t\tand depth follow the complete B feature." << endl << endl;
 
+    cerr << "\t-singleLine\t"   << "Report the depth at each position in each B feature." << endl;
+    cerr                        << "\t\tPositions reported are one based concatenated by ," << endl;
+    
     cerr << "\t-split\t"        << "Treat \"split\" BAM or BED12 entries as distinct BED intervals." << endl;
     cerr                        << "\t\twhen computing coverage." << endl;
     cerr                        << "\t\tFor BAM files, this uses the CIGAR \"N\" and \"D\" operations " << endl;

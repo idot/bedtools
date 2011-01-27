@@ -11,10 +11,11 @@
 ******************************************************************************/
 #include "lineFileUtilities.h"
 #include "coverageBed.h"
-
+#include <iostream>
+#include <iterator>
 // build
 BedCoverage::BedCoverage(string &bedAFile, string &bedBFile, bool forceStrand,
-                         bool writeHistogram, bool bamInput, bool obeySplits, bool eachBase) {
+                         bool writeHistogram, bool bamInput, bool obeySplits, bool eachBase, bool singleLine) {
 
     _bedAFile       = bedAFile;
     _bedBFile       = bedBFile;
@@ -27,8 +28,13 @@ BedCoverage::BedCoverage(string &bedAFile, string &bedBFile, bool forceStrand,
     _eachBase       = eachBase;
     _writeHistogram = writeHistogram;
     _bamInput       = bamInput;
-
-
+    _singleLine     = singleLine;
+    if(_singleLine == true){
+       _eachBase = false; 
+    }
+    if(_eachBase == true){
+       _singleLine = false; 
+    }
     if (_bamInput == false)
         CollectCoverageBed();
     else
@@ -164,7 +170,8 @@ void BedCoverage::ReportCoverage() {
                 // 0, 1, 2, ... n features in A
                 map<unsigned int, unsigned int> depthHist;
                 map<unsigned int, DEPTH>::const_iterator depthItr;
-
+                vector<unsigned int> baseCoverage;
+		
                 // compute the coverage observed at each base in the feature marching from start to end.
                 for (CHRPOS pos = start+1; pos <= bedItr->end; pos++)
                 {
@@ -177,14 +184,17 @@ void BedCoverage::ReportCoverage() {
                     if ((pos > bedItr->start) && (pos <= bedItr->end)) {
                         if (depth == 0) zeroDepthCount++;
                         // update our histograms, assuming we are not reporting "per-base" coverage.
-                        if (_eachBase == false) {
+                        if (_eachBase == false && _singleLine == false) {
                             depthHist[depth]++;
                             allDepthHist[depth]++;
                         }
-                        else {
-                            _bedB->reportBedTab(*bedItr);
-                            printf("%d\t%d\n", pos-bedItr->start, depth);
+                        else if(_eachBase == true){
+		                      _bedB->reportBedTab(*bedItr);
+                              printf("%d\t%d\n", pos-bedItr->start, depth);
                         }
+                        else if(_singleLine == true){
+			                  baseCoverage.push_back(depth);
+			            }
                     }
                     // decrement coverage if ends observed at this position.
                     if (depthItr != bedItr->depthMap.end())
@@ -193,7 +203,7 @@ void BedCoverage::ReportCoverage() {
 
                 // Summarize the coverage for the current interval,
                 // assuming the user has not requested "per-base" coverage.
-                if (_eachBase == false) {
+                if (_eachBase == false && _singleLine == false) {
                     CHRPOS length     = bedItr->end - bedItr->start;
                     totalLength       += length;
                     int nonZeroBases   = (length - zeroDepthCount);
@@ -215,7 +225,12 @@ void BedCoverage::ReportCoverage() {
                             printf("%d\t%d\t%d\t%0.7f\n", histItr->first, histItr->second, length, fractAtThisDepth);
                         }
                     }
-                }
+                }else if(_singleLine){
+		             std::ostream_iterator<unsigned int> cons (std::cout,",");
+		             _bedB->reportBedTab(*bedItr);
+		             std::copy(baseCoverage.begin(), baseCoverage.end(), cons);
+		             std::cout<<std::endl;
+		        }
             }
         }
     }

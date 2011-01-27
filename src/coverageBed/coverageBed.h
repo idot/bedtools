@@ -37,7 +37,7 @@ public:
 
     // constructor
     BedCoverage(string &bedAFile, string &bedBFile, bool forceStrand, bool writeHistogram,
-                bool bamInput, bool obeySplits, bool eachBase);
+                bool bamInput, bool obeySplits, bool eachBase, bool singleLine);
 
     // destructor
     ~BedCoverage(void);
@@ -65,6 +65,9 @@ private:
 
     // should discrete coverage be reported for each base in each feature?
     bool _eachBase;
+    
+    // should discrete coverage be reported for each base in each feature but on one line?
+    bool _singleLine;
 
     // private function for reporting coverage information
     void ReportCoverage();
